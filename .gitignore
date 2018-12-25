@@ -1,2 +1,3 @@
 .qmake.stash
 /build/
+*.pro.user
