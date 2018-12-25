@@ -1,0 +1,5 @@
+FROM dockcross/windows-x86
+
+RUN NPROC=$(($(nproc)+4)) && cd /usr/src/mxe && make --jobs=$NPROC JOBS=$NPROC MXE_TARGETS='i686-w64-mingw32.static' qtbase
+
+# i686-w64-mingw32.static-qmake-qt5

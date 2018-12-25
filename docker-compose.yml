@@ -1,0 +1,10 @@
+version: "2"
+
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.win
+    volumes:
+      - ".:/work"
+    command: sh -c 'mkdir -p build && cd build && i686-w64-mingw32.static-qmake-qt5 .. && make'
