@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=switch-lan-play-qt5
+GenericName=switch-lan-play-qt5
+Comment=switch-lan-play-qt5 Comment
+Icon=icon
+Exec=switch-lan-play-qt5
+Terminal=false
+Categories=Utility;
+Keywords=computer;

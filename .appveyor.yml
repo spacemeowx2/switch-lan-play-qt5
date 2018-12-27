@@ -1,0 +1,63 @@
+version: '{branch}-{build}'
+image: 'Visual Studio 2017'
+clone_depth: 1
+
+# Build configuration
+configuration:
+  - Release
+
+# Environment
+environment:
+  QT64PATH: 'C:\Qt\5.11.2\msvc2017_64'
+  VSVARSALLPATH: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat'
+  ARCH: x64
+
+install:
+  - cmd: call "%VSVARSALLPATH%" %ARCH%
+  - cmd: set "PATH=%QT64PATH%\bin;%PATH%"
+  # Artifacts
+  - cmd: set BIN=switch-lan-play-qt5
+
+before_build:
+  - cmd: git submodule update --init
+
+build_script:
+  # Compile it and check for .exe
+  - cmd: set "BUILDDIR=build_%ARCH%"
+  - cmd: mkdir %BUILDDIR%
+  - cmd: cd %BUILDDIR%
+  - cmd: qmake ..\src -config release -tp vc
+  - cmd: msbuild /m switch-lan-play-qt5.vcxproj /p:Configuration=Release
+
+after_build:
+  # Add a link to the build output within the source directory. This is needed because AppVeyor does
+  # not support extracting artifacts from out-of-source build directories. See 'artifacts' below.
+  - ps: $env:proj_version = (git describe --tags --dirty)
+  - cmd: set "ARTIFACT_NAME=%BIN%-%PROJ_VERSION%-%ARCH%"
+  - cmd: set "ARTIFACT_PATH=build_%ARCH%\switch-lan-play-qt5"
+  - cmd: if not %APPVEYOR_REPO_TAG% equ true ( echo "This is not tagged as release, will deploy nightly..." )
+  - cmd: if not %APPVEYOR_REPO_TAG% equ true ( set "ARTIFACT_NAME=%ARTIFACT_NAME%-nightly" && set "DEPLOY_RELEASE=nightly" ) else ( set "DEPLOY_RELEASE=%APPVEYOR_REPO_TAG_NAME%" )
+  - cmd: set "ARTIFACT_NAME=%ARTIFACT_NAME%.Windows"
+  - cmd: dir /b /s *.exe
+  - cmd: mkdir deploy
+  - cmd: copy release\%BIN%.exe deploy\%BIN%.exe
+  - cmd: windeployqt --qmldir ..\src deploy\%BIN%.exe --verbose=2
+  - cmd: 7z a -tzip %ARTIFACT_NAME%.zip deploy -r
+  - cmd: copy %ARTIFACT_NAME%.zip %APPVEYOR_BUILD_FOLDER%\%ARTIFACT_NAME%.zip
+  - cmd: dir /b /s *.zip
+
+# Artifacts
+artifacts:
+  - path: "%ARTIFACT_NAME%.zip"
+    name: "%ARTIFACT_NAME%"
+
+deploy:
+  provider: GitHub
+  release: "%DEPLOY_RELEASE%"
+  auth_token:
+    secure: 4XI4a3SLcgcB9xPkCvtjpUOd1hPBMDlrIj0G1ztt0YDV0gp1jbmllF4sFalyaLv6
+  artifact: "%ARTIFACT_NAME%"
+  draft: false
+  prerelease: true
+  on:
+    appveyor_repo_tag: true

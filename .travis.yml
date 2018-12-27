@@ -1,0 +1,85 @@
+language: cpp
+
+env:
+  global:
+    - BIN=switch-lan-play-qt5
+
+matrix:
+  include:
+    - os: linux
+      dist: xenial
+      sudo: require
+    - os: osx
+      osx_image: xcode10.1
+addons:
+  apt:
+    sources:
+      - sourceline: "ppa:beineri/opt-qt-5.11.2-xenial"
+    packages:
+      - qt511base
+      - qt511quickcontrols
+      - qt511quickcontrols2
+      - qt511svg
+      - libgl1-mesa-dev
+  homebrew:
+    update: true
+    packages:
+      - qt5
+
+install:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+      source /opt/qt5*/bin/qt5*-env.sh;
+      export ARTIFACT="${BIN}*.AppImage";
+    fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      export PATH="/usr/local/opt/qt/bin:$PATH";
+      export ARTIFACT="${BIN}*.dmg";
+    fi
+
+before_script:
+  - echo "Using tag $TRAVIS_TAG"
+  - if [[ "$TRAVIS_TAG" == "" ]]; then export TAGNAME="nightly" && export NIGHTLY="-nightly" ; else export TAGNAME="$TRAVIS_TAG" && export NIGHTLY="" ; fi
+  - echo "TAGNAME $TAGNAME NIGHTLY $NIGHTLY"
+  - git submodule init ; git submodule update
+
+script:
+  - mkdir build
+  - cd build
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+      qmake PREFIX=/usr APPIMAGE=1 ../src && make -j4;
+    fi
+  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
+      qmake ../src && make -j4;
+    fi
+after_success:
+  - export PROJ_VERSION=$(git describe --tags --dirty)
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+      make INSTALL_ROOT=appdir install &&
+      wget -c "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage" &&
+      chmod a+x linuxdeployqt*.AppImage &&
+      ./linuxdeployqt*.AppImage ./appdir/usr/share/applications/*.desktop -qmldir=../src -bundle-non-qt-libs -no-strip -verbose=2 &&
+      ./linuxdeployqt*.AppImage ./appdir/usr/share/applications/*.desktop -qmldir=../src -appimage -no-strip -verbose=2 &&
+      export APPIMAGE_FILE="switch-lan-play-qt5-$PROJ_VERSION-x64$NIGHTLY.Linux.AppImage" &&
+      mv $ARTIFACT "$APPIMAGE_FILE" &&
+      export FILE_TO_UPLOAD="$APPIMAGE_FILE" &&
+      find . | grep AppImage;
+    fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      macdeployqt $BIN.app/ -qmldir=../src -dmg &&
+      export DMG_FILE="switch-lan-play-qt5-$PROJ_VERSION-x64$NIGHTLY.macOS.dmg" &&
+      mv $ARTIFACT "$DMG_FILE" &&
+      export FILE_TO_UPLOAD="$DMG_FILE" &&
+      find . | grep dmg;
+    fi
+deploy:
+  skip_cleanup: true
+  provider: releases
+  draft: false
+  prerelease: true
+  api_key:
+    secure: 0l2XEoYPvZdOOVPHQtmdr3J1E4mgF47lQfnXyK5bbJyTg/ma4CdHIf3H51HdqoljlRcLI1S7PFOoaQJOXxJSOA4nDphSG7qDt6irPb81+iq6GpDYJXDI1nea5sec9mkfu8fwlRDy04eVbHlazOV3C+Jnyqk2trwsEGVnSSEh2ap76uFbrZuVMuCujHWxlbiCNMgyfyUUyN9VaIfX94GpCuuG7qRRDfV22nt6R0jVi0DTuwFol2D/fQqRRSHqx284eYwAhWWpxOq+rTbkecr6eGfdO07nghCQX8x8MKft3wfoAYTVvZBL8/NvQGWlom0+SNiIi+IdQVnVQqh8uXc6NX8cxL6Ia2+7uguKw/7drJ4ddtBC7ALvcazawZFZxacNVJgYYFwRNmbJ6/oSK+h8ZDkiqmzqEClKWTVTwdnGXwKbPbbEUMFLBHir37Zv2MTji4ZZellxgIAymAo271n2Nn43F1FeSHfRuv9UmMIkCsYB9wIfM8unmtb1g4PtIbeNxlsTZ3RVW+h3mlGWFiQadHxGJVdIZc7L4RyOOtqCxf05H2cd7eyCFrC/Ni7A9Mthkn1qDyteKaz7Sn+TULfK/BfHbdQcXpl0TJwCzom320pF/0ndyTyUC0LSx9UDiqsHKcxq48B2CD3O0aFuGAP3ZBaA1UKZ4ayM7pXmMv6FWv0=
+  file:
+    - "${FILE_TO_UPLOAD}"
+  on:
+    all_branches: true
+    tags: true
