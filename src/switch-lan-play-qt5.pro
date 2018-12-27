@@ -7,7 +7,7 @@ SOURCES += \
     main.cpp
 
 RESOURCES += \
-    ui/qml.qrc
+    qml/qml.qrc
 
 unix {
     isEmpty(PREFIX) {
