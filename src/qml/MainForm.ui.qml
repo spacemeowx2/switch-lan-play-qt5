@@ -26,14 +26,17 @@ Item {
         }
         delegate: Item {
             width: parent.width
-            height: 40
+            height: netif.height + 10
 
             Column {
-                anchors.fill: parent
-                anchors.margins: 5
-                Row {
+                id: netif
+                x: 5
+                y: 5
+                width: parent.width - 10
+                height: childrenRect.height
+                Item {
                     width: parent.width
-                    height: number.height
+                    height: childrenRect.height
                     Text {
                         id: number
                         text: no + '.'
@@ -55,7 +58,7 @@ Item {
                 spacing: 5
                 Text {
                     x: 20
-                    text: 'IP: ' + ip
+                    text: (ip.length > 0) ? ('IP: ' + ip) : ''
                 }
             }
             MouseArea {
