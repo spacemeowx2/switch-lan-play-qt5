@@ -22,19 +22,17 @@ function _parseNetIf(content) {
 
 function _interfaceIpScore(ip) {
     const IP_PREFIX_SCORE = {
-        '192.168.': 0,
-        '192.168.56.': -1,
-        '169.254.': -1,
-        '127.0.0.1': -1
+        '192.168.56.': 1,
+        '192.168.': 3,
+        '169.254.': 1,
+        '127.0.0.1': 1
     }
-    var keys = Object.keys(IP_PREFIX_SCORE)
-    for (var i = 0; i < keys.length; i++) {
-        var key = keys[i]
+    for (let [key, value] of Object.entries(IP_PREFIX_SCORE)) {
         if (key === ip.substr(0, key.length)) {
-            return 1 + IP_PREFIX_SCORE[key]
+            return value
         }
     }
-    return 0
+    return 2
 }
 
 function _reduceMax(a, b) {
@@ -42,16 +40,12 @@ function _reduceMax(a, b) {
 }
 
 function _interfaceSort(a, b) {
-    const IP_EMPTY_RANK = 10
-    const DESC_BLACK_RANK = 100
-    const IP_RANK = 1000
-    const DESC_BLACK_LIST = ['Oracle']
+    const DESC_BLACK_RANK = 1000
+    const IP_RANK = 100
+    const DESC_BLACK_LIST = ['Oracle', 'Microsoft Corporation']
 
     var ascore = 0
     var bscore = 0
-
-    ascore += (a.ip.length === 0 ? 0 : 1) * IP_EMPTY_RANK
-    bscore += (b.ip.length === 0 ? 0 : 1) * IP_EMPTY_RANK
 
     ascore += (DESC_BLACK_LIST.indexOf(a.description) === -1 ? 1 : 0) * DESC_BLACK_RANK
     bscore += (DESC_BLACK_LIST.indexOf(b.description) === -1 ? 1 : 0) * DESC_BLACK_RANK
