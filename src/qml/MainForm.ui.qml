@@ -1,58 +1,79 @@
 import QtQuick 2.9
+import QtQuick.Controls 2.9
 
 Item {
     id: element
     width: 400
     height: 400
+    property alias button: button
+    property alias devices: devices
 
     ListView {
-        id: listView
-        anchors.fill: parent
+        id: devices
+        x: 0
+        y: 0
+        width: parent.width
+        height: parent.height
+        clip: true
+
         model: ListModel {
             ListElement {
-                name: "Grey"
-                colorCode: "grey"
-            }
-
-            ListElement {
-                name: "Red"
-                colorCode: "red"
-            }
-
-            ListElement {
-                name: "Blue"
-                colorCode: "blue"
-            }
-
-            ListElement {
-                name: "Green"
-                colorCode: "green"
+                no: "1"
+                name: "{01B18F79-D26D-4BE3-88D1-DD179CD65BD6}"
+                description: "Microsoft Corporation"
+                ip: '192.168.1.1'
             }
         }
         delegate: Item {
-            x: 5
-            width: 80
+            width: parent.width
             height: 40
-            Row {
-                id: row1
-                spacing: 10
-                Rectangle {
-                    width: 40
-                    height: 40
-                    color: colorCode
+
+            Column {
+                anchors.fill: parent
+                anchors.margins: 5
+                Row {
+                    width: parent.width
+                    height: number.height
+                    Text {
+                        id: number
+                        text: no + '.'
+                    }
+                    Text {
+                        anchors.margins: 5
+                        anchors.left: number.right
+                        anchors.right: desc.left
+                        text: name
+                        clip: true
+                    }
+                    Text {
+                        anchors.right: parent.right
+                        id: desc
+                        text: '(' + description + ')'
+                    }
                 }
 
+                spacing: 5
                 Text {
-                    text: name
-                    anchors.verticalCenter: parent.verticalCenter
-                    font.bold: true
+                    x: 20
+                    text: 'IP: ' + ip
                 }
             }
+            MouseArea {
+                anchors.fill: parent
+                onClicked: devices.currentIndex = index
+            }
         }
+        highlight: Rectangle {
+            color: "lightsteelblue"
+            radius: 5
+        }
+        focus: true
+    }
+
+    Button {
+        id: button
+        x: 214
+        y: 209
+        text: qsTr("Button")
     }
 }
-
-/*##^## Designer {
-    D{i:11;anchors_height:160;anchors_width:110;anchors_x:92;anchors_y:80}
-}
- ##^##*/

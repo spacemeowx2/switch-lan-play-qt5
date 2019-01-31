@@ -3,8 +3,10 @@ TARGET = switch-lan-play-qt5
 QT += quick
 CONFIG += c++14
 
+INCLUDEPATH += include
 SOURCES += \
-    main.cpp
+    main.cpp \
+    core/lan-play.cpp
 
 RESOURCES += \
     qml/qml.qrc
@@ -31,3 +33,10 @@ unix {
         DEFINES += APPIMAGE
     }
 }
+
+DISTFILES += \
+    qml/qtquickcontrols2.conf
+
+HEADERS += \
+    include/core/lan-play.hpp \
+    include/native/process.hpp
