@@ -1,7 +1,8 @@
-import QtQuick 2.9
-import QtQuick.Controls 2.9
-import "."
 import "lan-play.js" as LanPlay
+import QtQuick 2.9
+import QtQuick.Layouts 1.12
+import QtQuick.Controls 2.9
+import "components"
 
 ApplicationWindow {
     id: window
@@ -10,20 +11,54 @@ ApplicationWindow {
     height: 480
     title: qsTr("Switch Lan Play")
 
-    MainForm {
-        button.onClicked: {
-            devices.model.clear()
-            LanPlay.listInterface(function (err, s) {
-                if (err !== null) {
-                    console.error('list interface', err)
-                } else {
-                    for (var i = 0; i < s.length; i++) {
-                        s[i].ip = s[i].ip.join(',')
-                        devices.model.append(s[i])
-                    }
-                }
-            })
+    header: ToolBar {
+        RowLayout {
+            anchors.fill: parent
+            Label {
+                text: "Title"
+                elide: Label.ElideRight
+                horizontalAlignment: Qt.AlignHCenter
+                verticalAlignment: Qt.AlignVCenter
+                Layout.fillWidth: true
+            }
         }
+        ToolButton {
+            text: qsTr("")
+            onClicked: menu.open()
+        }
+    }
+
+    StackView {
+        id: stack
         anchors.fill: parent
+        property var write
+
+        DeviceList {
+            onSelected: {
+                var param = {
+                    '--netif': name,
+                    '--relay-server-addr': 'localhost:11451'
+                }
+                stack.write = LanPlay.runLanPlay(param, function (out) {
+                    output.text += out
+                }, function (err) {
+                    output.text += err
+                }, function (err) {
+                    console.log('run end')
+                })
+            }
+        }
+
+        Text {
+            id: output
+            text: "test"
+        }
+        TextInput {
+            y: 100
+            width: 100
+            height: 40
+            id: input
+            Keys.onEnterPressed: stack.write(input.text)
+        }
     }
 }

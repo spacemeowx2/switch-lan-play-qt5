@@ -21,15 +21,17 @@ function _parseNetIf(content) {
 }
 
 function _interfaceIpScore(ip) {
-    const IP_PREFIX_SCORE = {
+    var IP_PREFIX_SCORE = {
         '192.168.56.': 1,
         '192.168.': 3,
         '169.254.': 1,
         '127.0.0.1': 1
     }
-    for (let [key, value] of Object.entries(IP_PREFIX_SCORE)) {
+    var keys = Object.entries(IP_PREFIX_SCORE)
+    for (var i = 0; i < keys.length; i++) {
+        var key = keys[i]
         if (key === ip.substr(0, key.length)) {
-            return value
+            return IP_PREFIX_SCORE[key]
         }
     }
     return 2
@@ -40,9 +42,9 @@ function _reduceMax(a, b) {
 }
 
 function _interfaceSort(a, b) {
-    const DESC_BLACK_RANK = 1000
-    const IP_RANK = 100
-    const DESC_BLACK_LIST = ['Oracle', 'Microsoft Corporation']
+    var DESC_BLACK_RANK = 1000
+    var IP_RANK = 100
+    var DESC_BLACK_LIST = ['Oracle', 'Microsoft Corporation']
 
     var ascore = 0
     var bscore = 0
@@ -60,8 +62,33 @@ function _interfaceSort(a, b) {
     }
 }
 
+function _paramToArray(param) {
+    var keys = Object.keys(param)
+    var out = []
+
+    for (var i = 0; i < keys.length; i++) {
+        var key = keys[i]
+        var value = param[key]
+
+        if (value === true) {
+            out.push(key)
+        } else {
+            out.push(key, value)
+        }
+    }
+
+    return out
+}
+
 function listInterface(callback) {
+    var bin = _LanPlay.getLanPlay()
     var process = _LanPlay.createProcess()
+
+    if (bin === '') {
+        callback(new Error('lan-play executable not found'))
+    }
+
+    console.log('lan-play path: ', bin)
     process.finished.connect(function () {
         console.log('finished')
         const content = process.readAll()
@@ -71,5 +98,35 @@ function listInterface(callback) {
     process.errorOccurred.connect(function (err) {
         callback(err)
     })
-    process.start('lan-play.exe', ['--list-if'])
+    process.start(bin, ['--list-if'])
+}
+
+var _currentLanPlay = null
+function runLanPlay(param, stdout, stderr, callback) {
+    if (_currentLanPlay) {
+        _currentLanPlay.kill()
+        _currentLanPlay = null
+    }
+    var bin = _LanPlay.getLanPlay()
+    var process = _LanPlay.createProcess()
+    _currentLanPlay = process
+
+    process.finished.connect(function () {
+        console.log('runLanPlay finished')
+
+        callback(null)
+    })
+    process.errorOccurred.connect(function (err) {
+        callback(err)
+    })
+    process.readyReadStandardOutput.connect(function () {
+        stdout(process.readAllStandardOutput())
+    })
+    process.readyReadStandardError.connect(function () {
+        stderr(process.readAllStandardError())
+    })
+    process.start(bin, _paramToArray(param))
+    return function (text) {
+        process.write(text)
+    }
 }

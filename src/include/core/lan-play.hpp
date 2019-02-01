@@ -6,12 +6,15 @@
 
 class LanPlay : public QObject {
     Q_OBJECT
+private:
+    QString getConfigPath();
 public:
     explicit LanPlay(QObject *parent = nullptr);
 
-    Q_INVOKABLE QStringList listInterface(QJSValue jsCallback);
     Q_INVOKABLE QObject* createProcess();
-
+    Q_INVOKABLE QString getLanPlay();
+    Q_INVOKABLE QString getConfig();
+    Q_INVOKABLE void setConfig(QJSValue config);
 };
 
 #endif // LANPLAY_HPP

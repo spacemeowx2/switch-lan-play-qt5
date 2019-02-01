@@ -18,11 +18,19 @@ public:
         for (int i = 0; i < arguments.length(); i++)
             args << arguments[i].toString();
 
-        QProcess::start(program, args);
+        QProcess::start(program, args, QProcess::Unbuffered | QProcess::ReadWrite);
     }
 
     Q_INVOKABLE QByteArray readAll() {
         return QProcess::readAll();
+    }
+
+    Q_INVOKABLE QByteArray readAllStandardOutput() {
+        return QProcess::readAllStandardOutput();
+    }
+
+    Q_INVOKABLE QByteArray readAllStandardError() {
+        return QProcess::readAllStandardError();
     }
 };
 
