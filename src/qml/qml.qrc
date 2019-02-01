@@ -1,7 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>Main.qml</file>
-        <file>MainForm.ui.qml</file>
         <file>qtquickcontrols2.conf</file>
         <file>lan-play.js</file>
         <file>components/DeviceList.qml</file>

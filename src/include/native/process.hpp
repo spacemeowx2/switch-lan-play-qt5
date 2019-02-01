@@ -13,8 +13,6 @@ public:
     Q_INVOKABLE void start(const QString &program, const QVariantList &arguments) {
         QStringList args;
 
-        // convert QVariantList from QML to QStringList for QProcess
-
         for (int i = 0; i < arguments.length(); i++)
             args << arguments[i].toString();
 

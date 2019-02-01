@@ -44,7 +44,7 @@ ApplicationWindow {
                 }, function (err) {
                     output.text += err
                 }, function (err) {
-                    console.log('run end')
+                    console.log('run end', err)
                 })
             }
         }

@@ -27,7 +27,7 @@ function _interfaceIpScore(ip) {
         '169.254.': 1,
         '127.0.0.1': 1
     }
-    var keys = Object.entries(IP_PREFIX_SCORE)
+    var keys = Object.keys(IP_PREFIX_SCORE)
     for (var i = 0; i < keys.length; i++) {
         var key = keys[i]
         if (key === ip.substr(0, key.length)) {
@@ -62,7 +62,7 @@ function _interfaceSort(a, b) {
     }
 }
 
-function _paramToArray(param) {
+function _paramToArray(param, preventSetBuf) {
     var keys = Object.keys(param)
     var out = []
 
@@ -75,6 +75,10 @@ function _paramToArray(param) {
         } else {
             out.push(key, value)
         }
+    }
+
+    if (!preventSetBuf) {
+        out.push('--set-ionbf')
     }
 
     return out

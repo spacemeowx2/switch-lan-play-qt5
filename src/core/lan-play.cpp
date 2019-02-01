@@ -15,7 +15,7 @@ QObject* LanPlay::createProcess() {
 QString LanPlay::getLanPlay() {
 #if defined(Q_OS_MAC) || defined(Q_OS_LINUX)
     auto bin = "lan-play";
-#elif defined(Q_OS_WINDOWS)
+#elif defined(Q_OS_WIN)
     auto bin = "lan-play.exe";
 #else
     return "";
