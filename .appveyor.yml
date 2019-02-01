@@ -41,7 +41,7 @@ after_build:
   - cmd: dir /b /s *.exe
   - cmd: mkdir deploy
   - cmd: copy release\%BIN%.exe deploy\%BIN%.exe
-  - cmd: windeployqt --qmldir ..\src deploy\%BIN%.exe --verbose=2
+  - cmd: windeployqt --qmldir ..\src --no-compiler-runtime --no-angle --no-opengl-sw --no-translations deploy\%BIN%.exe --verbose=2
   - cmd: 7z a -tzip %ARTIFACT_NAME%.zip deploy -r
   - cmd: copy %ARTIFACT_NAME%.zip %APPVEYOR_BUILD_FOLDER%\%ARTIFACT_NAME%.zip
   - cmd: dir /b /s *.zip
