@@ -3,6 +3,7 @@ import QtQuick 2.9
 import QtQuick.Layouts 1.12
 import QtQuick.Controls 2.9
 import "components"
+import "pages"
 
 ApplicationWindow {
     id: window
@@ -23,42 +24,45 @@ ApplicationWindow {
             }
         }
         ToolButton {
-            text: qsTr("")
-            onClicked: menu.open()
+            text: stackView.depth > 1 ? "\u25C0" : "\u2630"
+            font.pixelSize: Qt.application.font.pixelSize * 1.6
+            onClicked: drawer.open()
+        }
+    }
+
+    Drawer {
+        id: drawer
+        width: window.width * 0.33
+        height: window.height
+
+        Column {
+            anchors.fill: parent
+
+            ItemDelegate {
+                text: qsTr("Page 1")
+                width: parent.width
+                onClicked: {
+                    drawer.close()
+                }
+            }
+            ItemDelegate {
+                text: qsTr("Page 2")
+                width: parent.width
+                onClicked: {
+                    drawer.close()
+                }
+            }
         }
     }
 
     StackView {
-        id: stack
+        id: stackView
         anchors.fill: parent
-        property var write
-
-        DeviceList {
-            onSelected: {
-                var param = {
-                    '--netif': name,
-                    '--relay-server-addr': 'localhost:11451'
-                }
-                stack.write = LanPlay.runLanPlay(param, function (out) {
-                    output.text += out
-                }, function (err) {
-                    output.text += err
-                }, function (err) {
-                    console.log('run end', err)
-                })
-            }
-        }
+        initialItem: "pages/DeviceSelect.qml"
 
         Text {
-            id: output
-            text: "test"
+            text: stackView.currentItem.output
         }
-        TextInput {
-            y: 100
-            width: 100
-            height: 40
-            id: input
-            Keys.onEnterPressed: stack.write(input.text)
-        }
+
     }
 }

@@ -4,5 +4,7 @@
         <file>qtquickcontrols2.conf</file>
         <file>lan-play.js</file>
         <file>components/DeviceList.qml</file>
+        <file>pages/DeviceSelect.qml</file>
+        <file>pages/LanPlayStatus.qml</file>
     </qresource>
 </RCC>

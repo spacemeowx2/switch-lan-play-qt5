@@ -30,6 +30,10 @@ public:
     Q_INVOKABLE QByteArray readAllStandardError() {
         return QProcess::readAllStandardError();
     }
+
+    Q_INVOKABLE void setProcessChannelModeMerged() {
+        QProcess::setProcessChannelMode(QProcess::MergedChannels);
+    }
 };
 
 #endif // PROCESS_HPP

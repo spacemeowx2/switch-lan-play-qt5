@@ -6,7 +6,7 @@ ListView {
     id: deviceList
     anchors.fill: parent
     clip: true
-    signal selected(string name)
+    signal selected(string deviceName)
 
     Component.onCompleted: loadDevices()
     function loadDevices() {

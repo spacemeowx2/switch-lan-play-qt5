@@ -1,5 +1,12 @@
-function _parseNetIf(content) {
-    var out = []
+interface NetInterface {
+    no: string
+    name: string
+    description: string
+    ip: string[]
+}
+
+function _parseNetIf(content: string) {
+    var out: NetInterface[] = []
     var re = /(\d+)\.\s*([0-9a-zA-Z\-_{}]+)\s*\((.*)\)(\r?\n\s*IP:\s*\[(.*)\])?/g
 
     while (1) {
@@ -22,16 +29,14 @@ function _parseNetIf(content) {
     return out
 }
 
-function _interfaceIpScore(ip) {
-    var IP_PREFIX_SCORE = {
+function _interfaceIpScore(ip: string): number {
+    const IP_PREFIX_SCORE: { [key: string]: number } = {
         '192.168.56.': 1,
         '192.168.': 3,
         '169.254.': 1,
         '127.0.0.1': 1
     }
-    var keys = Object.keys(IP_PREFIX_SCORE)
-    for (var i = 0; i < keys.length; i++) {
-        var key = keys[i]
+    for (let key of Object.keys(IP_PREFIX_SCORE)) {
         if (key === ip.substr(0, key.length)) {
             return IP_PREFIX_SCORE[key]
         }
@@ -39,11 +44,11 @@ function _interfaceIpScore(ip) {
     return 2
 }
 
-function _reduceMax(a, b) {
+function _reduceMax(a: number, b: number) {
     return a > b ? a : b
 }
 
-function _interfaceSort(a, b) {
+function _interfaceSort(a: NetInterface, b: NetInterface) {
     var DESC_BLACK_RANK = 1000
     var IP_RANK = 100
     var DESC_BLACK_LIST = ['Oracle', 'Microsoft Corporation']
@@ -58,13 +63,13 @@ function _interfaceSort(a, b) {
     bscore += (b.ip.map(_interfaceIpScore).reduce(_reduceMax, 0)) * IP_RANK
 
     if (ascore - bscore === 0) {
-        return a.no - b.no
+        return parseInt(a.no) - parseInt(b.no)
     } else {
         return bscore - ascore
     }
 }
 
-function _paramToArray(param, preventSetBuf) {
+function _paramToArray(param: Record<string, string | boolean>, preventSetBuf?: boolean) {
     var keys = Object.keys(param)
     var out = []
 
@@ -135,63 +140,64 @@ function runLanPlay(param, onData, callback) {
     }
 }
 
-function emptyFunction() {
-    // do nothing
+interface LanPlayArgs {
+    netif: string
+    relayServerAddr: string
+    socks5ServerAddr: string
+    broadcast: boolean
+    fakeInternet: boolean
 }
-function LanPlay() {
-    this.args = {
-        netif: '',
-        relayServerAddr: '',
-        socks5ServerAddr: '',
-        broadcast: false,
-        fakeInternet: false
-    }
-    this.process = null
-}
-
-LanPlay.prototype.onData = emptyFunction
-LanPlay.prototype.onFinished = emptyFunction
-LanPlay.prototype.onError = emptyFunction
-
-LanPlay.prototype._start = function _start() {
-    var self = this
-    if (this.process) {
-        this.process.kill()
+interface QProcess {}
+class LanPlay {
+    args: LanPlayArgs
+    process: QProcess | null
+    constructor () {
+        this.args = {
+            netif: '',
+            relayServerAddr: '',
+            socks5ServerAddr: '',
+            broadcast: false,
+            fakeInternet: false
+        }
         this.process = null
     }
-    var process = _LanPlay.createProcess()
-
-    this.process = process
-
-    process.setProcessChannelModeMerged()
-    process.finished.connect(function () {
-        self.onFinished()
-    })
-    process.errorOccurred.connect(function (err) {
-        self.onError(err)
-    })
-    process.readyRead.connect(function () {
-        self.onData(process.readAll())
-    })
-    process.start(_LanPlay.getLanPlay(), _paramToArray(param))
-}
-LanPlay.prototype.setNetif = function setNetif(netif) {
-    if (this.args.netif === netif) return
-    this.args.netif = netif
-    this._start()
-}
-LanPlay.prototype.setRelayServerAddr = function setRelayServerAddr(addr) {
-    if (this.args.relayServerAddr === addr) return
-    this.args.relayServerAddr = addr
-    this._start()
-}
-LanPlay.prototype.setSocks5ServerAddr = function setSocks5ServerAddr(addr) {
-    if (this.args.socks5ServerAddr === addr) return
-    this.args.socks5ServerAddr = addr
-    this._start()
-}
-LanPlay.prototype.setBroadcast = function setSocks5ServerAddr(addr) {
-    if (this.args.socks5ServerAddr === addr) return
-    this.args.socks5ServerAddr = addr
-    this._start()
+    onData (data: string) {}
+    onFinished () {}
+    onError (err: any) {}
+    _start () {
+        if (this.process) {
+            this.process.kill()
+            this.process = null
+        }
+        var process = _LanPlay.createProcess()
+    
+        this.process = process
+    
+        process.setProcessChannelModeMerged()
+        process.finished.connect(() => {
+            this.onFinished()
+        })
+        process.errorOccurred.connect((err: any) => {
+            this.onError(err)
+        })
+        process.readyRead.connect(() => {
+            this.onData(process.readAll())
+        })
+        process.start(_LanPlay.getLanPlay(), _paramToArray(this.args))
+    }
+    setNetif(netif: string) {
+        if (this.args.netif === netif) return
+        this.args.netif = netif
+        this._start()
+    }
+    setRelayServerAddr(addr: string) {
+        if (this.args.relayServerAddr === addr) return
+        this.args.relayServerAddr = addr
+        this._start()
+    }
+    setSocks5ServerAddr(addr: string) {
+        if (this.args.socks5ServerAddr === addr) return
+        this.args.socks5ServerAddr = addr
+        this._start()
+    }
 }
