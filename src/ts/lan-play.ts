@@ -6,8 +6,8 @@ interface NetInterface {
 }
 
 function _parseNetIf(content: string) {
-    var out: NetInterface[] = []
-    var re = /(\d+)\.\s*([0-9a-zA-Z\-_{}]+)\s*\((.*)\)(\r?\n\s*IP:\s*\[(.*)\])?/g
+    let out: NetInterface[] = []
+    let re = /(\d+)\.\s*([0-9a-zA-Z\-_{}]+)\s*\((.*)\)(\r?\n\s*IP:\s*\[(.*)\])?/g
 
     while (1) {
         var r = re.exec(content)
@@ -69,7 +69,7 @@ function _interfaceSort(a: NetInterface, b: NetInterface) {
     }
 }
 
-function _paramToArray(param: Record<string, string | boolean>, preventSetBuf?: boolean) {
+function _paramToArray(param: Record<string, any>, preventSetBuf?: boolean) {
     var keys = Object.keys(param)
     var out = []
 
@@ -91,7 +91,7 @@ function _paramToArray(param: Record<string, string | boolean>, preventSetBuf?: 
     return out
 }
 
-function listInterface(callback) {
+function listInterface(callback: (err: Error | null, netif?: NetInterface[]) => void) {
     var bin = _LanPlay.getLanPlay()
     var process = _LanPlay.createProcess()
 
@@ -100,44 +100,16 @@ function listInterface(callback) {
     }
 
     console.log('lan-play path: ', bin)
-    process.finished.connect(function () {
+    process.finished.connect(() => {
         console.log('finished')
         var content = process.readAll()
 
         callback(null, _parseNetIf(content).sort(_interfaceSort))
     })
-    process.errorOccurred.connect(function (err) {
-        callback(err)
+    process.errorOccurred.connect(function (err: number) {
+        callback(new Error(err.toString()))
     })
     process.start(bin, ['--list-if'])
-}
-
-var _currentLanPlay = null
-function runLanPlay(param, onData, callback) {
-    if (_currentLanPlay) {
-        _currentLanPlay.kill()
-        _currentLanPlay = null
-    }
-    var bin = _LanPlay.getLanPlay()
-    var process = _LanPlay.createProcess()
-
-    _currentLanPlay = process
-
-    process.setProcessChannelModeMerged()
-    process.finished.connect(function () {
-        callback(null)
-    })
-    process.errorOccurred.connect(function (err) {
-        callback(err)
-    })
-    process.readyRead.connect(function () {
-        onData(process.readAll())
-    })
-    process.start(bin, _paramToArray(param))
-
-    return function (text) {
-        process.write(text)
-    }
 }
 
 interface LanPlayArgs {
@@ -147,7 +119,6 @@ interface LanPlayArgs {
     broadcast: boolean
     fakeInternet: boolean
 }
-interface QProcess {}
 class LanPlay {
     args: LanPlayArgs
     process: QProcess | null
@@ -184,7 +155,7 @@ class LanPlay {
             this.onData(process.readAll())
         })
         process.start(_LanPlay.getLanPlay(), _paramToArray(this.args))
-    }
+    } 
     setNetif(netif: string) {
         if (this.args.netif === netif) return
         this.args.netif = netif

@@ -1,5 +1,10 @@
 TARGET = switch-lan-play-qt5
 
+build_ts.commands = npx -p typescript@3 tsc -p $$PWD/ts
+build_ts.CONFIG = recursive
+QMAKE_EXTRA_TARGETS += build_ts
+PRE_TARGETDEPS += build_ts
+
 QT += quick
 CONFIG += c++14
 
