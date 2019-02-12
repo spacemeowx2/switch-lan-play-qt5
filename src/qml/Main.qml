@@ -26,7 +26,13 @@ ApplicationWindow {
         ToolButton {
             text: stackView.depth > 1 ? "\u25C0" : "\u2630"
             font.pixelSize: Qt.application.font.pixelSize * 1.6
-            onClicked: drawer.open()
+            onClicked: stackView.depth > 1 ? stackView.pop() : drawer.open()
+        }
+        ToolButton {
+            anchors.right: parent.right
+            text: "\u2631"
+            font.pixelSize: Qt.application.font.pixelSize * 1.6
+            onClicked: stackView.push('pages/Settings.qml')
         }
     }
 
@@ -59,10 +65,5 @@ ApplicationWindow {
         id: stackView
         anchors.fill: parent
         initialItem: "pages/DeviceSelect.qml"
-
-        Text {
-            text: stackView.currentItem.output
-        }
-
     }
 }

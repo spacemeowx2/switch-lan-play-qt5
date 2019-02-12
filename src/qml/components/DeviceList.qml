@@ -4,7 +4,6 @@ import QtQuick.Controls 2.9
 
 ListView {
     id: deviceList
-    anchors.fill: parent
     clip: true
     signal selected(string deviceName)
 

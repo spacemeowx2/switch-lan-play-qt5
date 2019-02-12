@@ -6,5 +6,6 @@
         <file>components/DeviceList.qml</file>
         <file>pages/DeviceSelect.qml</file>
         <file>pages/LanPlayStatus.qml</file>
+        <file>pages/Settings.qml</file>
     </qresource>
 </RCC>
