@@ -69,25 +69,71 @@ function _paramToArray(param, preventSetBuf) {
     }
     return out;
 }
-function listInterface(callback) {
-    var bin = _LanPlay.getLanPlay();
-    var process = _LanPlay.createProcess();
-    if (bin === '') {
-        callback(new Error('lan-play executable not found'));
+var ProcessWrap = /** @class */ (function () {
+    function ProcessWrap(bin, args) {
+        this.process = null;
+        this._args = [];
+        this._bin = '';
+        if (bin) {
+            this._bin = bin;
+        }
+        if (args) {
+            this._args = args;
+        }
+        this._start();
     }
-    console.log('lan-play path: ', bin);
-    process.finished.connect(function () {
-        console.log('finished');
-        var content = process.readAll();
-        callback(null, _parseNetIf(content).sort(_interfaceSort));
+    ProcessWrap.prototype.onData = function (data) { };
+    ProcessWrap.prototype.onFinished = function () { };
+    ProcessWrap.prototype.onError = function (err) { };
+    ProcessWrap.prototype._start = function () {
+        var _this = this;
+        if (!this._bin) {
+            return;
+        }
+        if (this.process) {
+            this.process.kill();
+            this.process = null;
+        }
+        var process = _LanPlay.createProcess();
+        this.process = process;
+        process.setProcessChannelModeMerged();
+        process.finished.connect(function () { return _this.onFinished(); });
+        process.errorOccurred.connect(function (err) { return _this.onError(new Error("Process error: " + err)); });
+        process.readyRead.connect(function () { return _this.onData(process.readAll()); });
+        process.start(this._bin, this._args);
+    };
+    Object.defineProperty(ProcessWrap.prototype, "bin", {
+        get: function () {
+            return this._bin;
+        },
+        set: function (v) {
+            if (this._bin === v) {
+                return;
+            }
+            this._bin = v;
+            this._start();
+        },
+        enumerable: true,
+        configurable: true
     });
-    process.errorOccurred.connect(function (err) {
-        callback(new Error(err.toString()));
+    Object.defineProperty(ProcessWrap.prototype, "args", {
+        set: function (a) {
+            var b = this._args;
+            if (a.length === b.length && a.every(function (v, i) { return v === b[i]; })) {
+                return;
+            }
+            this._args = a;
+            this._start();
+        },
+        enumerable: true,
+        configurable: true
     });
-    process.start(bin, ['--list-if']);
-}
+    return ProcessWrap;
+}());
 var LanPlay = /** @class */ (function () {
     function LanPlay() {
+        var _this = this;
+        this.process = new ProcessWrap();
         this.args = {
             netif: '',
             relayServerAddr: '',
@@ -95,7 +141,9 @@ var LanPlay = /** @class */ (function () {
             broadcast: false,
             fakeInternet: false
         };
-        this.process = null;
+        this.process.onData = function (d) { return _this.onData(d); };
+        this.process.onFinished = function () { return _this.onFinished(); };
+        this.process.onError = function (e) { return _this.onError(e); };
     }
     LanPlay.getInstance = function () {
         return this.self;
@@ -104,24 +152,8 @@ var LanPlay = /** @class */ (function () {
     LanPlay.prototype.onFinished = function () { };
     LanPlay.prototype.onError = function (err) { };
     LanPlay.prototype._start = function () {
-        var _this = this;
-        if (this.process) {
-            this.process.kill();
-            this.process = null;
-        }
-        var process = _LanPlay.createProcess();
-        this.process = process;
-        process.setProcessChannelModeMerged();
-        process.finished.connect(function () {
-            _this.onFinished();
-        });
-        process.errorOccurred.connect(function (err) {
-            _this.onError(err);
-        });
-        process.readyRead.connect(function () {
-            _this.onData(process.readAll());
-        });
-        process.start(_LanPlay.getLanPlay(), _paramToArray(this.args));
+        this.process.args = _paramToArray(this.args);
+        this.process.bin = _LanPlay.getLanPlay();
     };
     LanPlay.prototype.setNetif = function (netif) {
         if (this.args.netif === netif)
@@ -141,6 +173,24 @@ var LanPlay = /** @class */ (function () {
         this.args.socks5ServerAddr = addr;
         this._start();
     };
+    LanPlay.prototype.listInterface = function (callback) {
+        var bin = _LanPlay.getLanPlay();
+        if (bin === '') {
+            callback(new Error('lan-play executable not found'));
+        }
+        var p = new ProcessWrap(bin, ['--list-if']);
+        var content = '';
+        p.onData = function (d) {
+            content += d;
+        };
+        p.onFinished = function () {
+            callback(null, _parseNetIf(content).sort(_interfaceSort));
+        };
+        p.onError = function (e) {
+            callback(e);
+        };
+    };
     LanPlay.self = new LanPlay();
     return LanPlay;
 }());
+var lanPlay = LanPlay.getInstance();

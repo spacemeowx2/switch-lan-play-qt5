@@ -1,4 +1,4 @@
-import "../lan-play.js" as LanPlay
+import "../lan-play.js" as SLP
 import QtQuick 2.9
 import QtQuick.Controls 2.9
 
@@ -6,11 +6,12 @@ ListView {
     id: deviceList
     clip: true
     signal selected(string deviceName)
+    property var lanPlay: SLP.lanPlay
 
     Component.onCompleted: loadDevices()
     function loadDevices() {
         deviceList.model.clear()
-        LanPlay.listInterface(function (err, s) {
+        lanPlay.listInterface(function (err, s) {
             if (err !== null) {
                 console.error('list interface', err)
             } else {

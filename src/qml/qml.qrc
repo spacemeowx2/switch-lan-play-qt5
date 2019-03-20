@@ -7,5 +7,6 @@
         <file>pages/DeviceSelect.qml</file>
         <file>pages/LanPlayStatus.qml</file>
         <file>pages/Settings.qml</file>
+        <file>components/LanPlay.qml</file>
     </qresource>
 </RCC>

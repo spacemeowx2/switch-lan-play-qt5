@@ -85,27 +85,59 @@ function _paramToArray(param: Record<string, any>, preventSetBuf?: boolean) {
   return out
 }
 
-function listInterface(callback: (err: Error | null, netif?: NetInterface[]) => void) {
-  const bin = _LanPlay.getLanPlay()
-  let process = _LanPlay.createProcess()
-
-  if (bin === '') {
-    callback(new Error('lan-play executable not found'))
+class ProcessWrap {
+  private process: QProcess | null = null
+  private _args: string[] = []
+  private _bin: string = ''
+  constructor (bin?: string, args?: string[]) {
+    if (bin) {
+      this._bin = bin
+    }
+    if (args) {
+      this._args = args
+    }
+    this._start()
   }
+  onData (data: string) {}
+  onFinished () {}
+  onError (err: Error) {}
+  private _start () {
+    if (!this._bin) {
+      return
+    }
+    if (this.process) {
+      this.process.kill()
+      this.process = null
+    }
+    const process = _LanPlay.createProcess()
 
-  console.log('lan-play path: ', bin)
-  process.finished.connect(() => {
-    console.log('finished')
-    const content = process.readAll()
+    this.process = process
 
-    callback(null, _parseNetIf(content).sort(_interfaceSort))
-  })
-  process.errorOccurred.connect(function (err: number) {
-    callback(new Error(err.toString()))
-  })
-  process.start(bin, ['--list-if'])
+    process.setProcessChannelModeMerged()
+    process.finished.connect(() => this.onFinished())
+    process.errorOccurred.connect((err: number) => this.onError(new Error(`Process error: ${err}`)))
+    process.readyRead.connect(() => this.onData(process.readAll()))
+    process.start(this._bin, this._args)
+  }
+  set bin (v: string) {
+    if (this._bin === v) {
+      return
+    }
+    this._bin = v
+    this._start()
+  }
+  get bin () {
+    return this._bin
+  }
+  set args (a: string[]) {
+    const b = this._args
+    if (a.length === b.length && a.every((v, i) => v === b[i])) {
+      return
+    }
+    this._args = a
+    this._start()
+  }
 }
-
 interface LanPlayArgs {
   netif: string
   relayServerAddr: string
@@ -115,8 +147,8 @@ interface LanPlayArgs {
 }
 class LanPlay {
   args: LanPlayArgs
-  process: QProcess | null
-  static self: LanPlay = new LanPlay()
+  process = new ProcessWrap()
+  static self = new LanPlay()
   static getInstance() {
     return this.self
   }
@@ -128,32 +160,17 @@ class LanPlay {
       broadcast: false,
       fakeInternet: false
     }
-    this.process = null
+    this.process.onData = d => this.onData(d)
+    this.process.onFinished = () => this.onFinished()
+    this.process.onError = e => this.onError(e)
   }
   onData (data: string) {}
   onFinished () {}
-  onError (err: any) {}
-  _start () {
-    if (this.process) {
-      this.process.kill()
-      this.process = null
-    }
-    const process = _LanPlay.createProcess()
-
-    this.process = process
-
-    process.setProcessChannelModeMerged()
-    process.finished.connect(() => {
-        this.onFinished()
-    })
-    process.errorOccurred.connect((err: any) => {
-        this.onError(err)
-    })
-    process.readyRead.connect(() => {
-        this.onData(process.readAll())
-    })
-    process.start(_LanPlay.getLanPlay(), _paramToArray(this.args))
-  } 
+  onError (err: Error) {}
+  private _start () {
+    this.process.args = _paramToArray(this.args)
+    this.process.bin = _LanPlay.getLanPlay()
+  }
   setNetif(netif: string) {
     if (this.args.netif === netif) return
     this.args.netif = netif
@@ -169,4 +186,23 @@ class LanPlay {
     this.args.socks5ServerAddr = addr
     this._start()
   }
+  listInterface(callback: (err: Error | null, netif?: NetInterface[]) => void) {
+    const bin = _LanPlay.getLanPlay()
+  
+    if (bin === '') {
+      callback(new Error('lan-play executable not found'))
+    }
+    const p = new ProcessWrap(bin, ['--list-if'])
+    let content = ''
+    p.onData = d => {
+      content += d
+    }
+    p.onFinished = () => {
+      callback(null, _parseNetIf(content).sort(_interfaceSort))
+    }
+    p.onError = e => {
+      callback(e)
+    }
+  }
 }
+const lanPlay = LanPlay.getInstance()
