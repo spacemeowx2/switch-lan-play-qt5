@@ -169,7 +169,7 @@ class LanPlay {
   onError (err: Error) {}
   private _start () {
     this.process.args = _paramToArray(this.args)
-    this.process.bin = _LanPlay.getLanPlay()
+    this.process.bin = _LanPlay.findLanPlay()
   }
   setNetif(netif: string) {
     if (this.args.netif === netif) return
@@ -187,7 +187,7 @@ class LanPlay {
     this._start()
   }
   listInterface(callback: (err: Error | null, netif?: NetInterface[]) => void) {
-    const bin = _LanPlay.getLanPlay()
+    const bin = _LanPlay.findLanPlay()
   
     if (bin === '') {
       callback(new Error('lan-play executable not found'))

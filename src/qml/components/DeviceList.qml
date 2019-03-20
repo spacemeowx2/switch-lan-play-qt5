@@ -1,12 +1,13 @@
-import "../lan-play.js" as SLP
+// import "../lan-play.js" as SLP
 import QtQuick 2.9
 import QtQuick.Controls 2.9
+import cn.imspace.slp 1.0
 
 ListView {
     id: deviceList
     clip: true
     signal selected(string deviceName)
-    property var lanPlay: SLP.lanPlay
+    property var lanPlay: LanPlay.getLanPlay()
 
     Component.onCompleted: loadDevices()
     function loadDevices() {

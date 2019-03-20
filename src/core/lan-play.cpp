@@ -12,11 +12,11 @@ QObject* LanPlay::createProcess() {
     return new Process();
 }
 
-QString LanPlay::getLanPlay() {
+QString LanPlay::findFile(QString name) {
 #if defined(Q_OS_MAC) || defined(Q_OS_LINUX)
-    auto bin = "lan-play";
+    auto bin = name;
 #elif defined(Q_OS_WIN)
-    auto bin = "lan-play.exe";
+    auto bin = name + ".exe";
 #else
     return "";
 #endif
@@ -33,6 +33,10 @@ QString LanPlay::getLanPlay() {
         }
     } while (curDir.cdUp() && curDir.exists());
     return "";
+}
+
+QString LanPlay::findLanPlay() {
+    return this->findFile("lan-play");
 }
 
 QString LanPlay::getConfig() {

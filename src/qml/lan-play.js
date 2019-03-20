@@ -153,7 +153,7 @@ var LanPlay = /** @class */ (function () {
     LanPlay.prototype.onError = function (err) { };
     LanPlay.prototype._start = function () {
         this.process.args = _paramToArray(this.args);
-        this.process.bin = _LanPlay.getLanPlay();
+        this.process.bin = _LanPlay.findLanPlay();
     };
     LanPlay.prototype.setNetif = function (netif) {
         if (this.args.netif === netif)
@@ -174,7 +174,7 @@ var LanPlay = /** @class */ (function () {
         this._start();
     };
     LanPlay.prototype.listInterface = function (callback) {
-        var bin = _LanPlay.getLanPlay();
+        var bin = _LanPlay.findLanPlay();
         if (bin === '') {
             callback(new Error('lan-play executable not found'));
         }

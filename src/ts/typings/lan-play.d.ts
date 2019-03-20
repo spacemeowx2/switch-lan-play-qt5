@@ -11,7 +11,7 @@ interface QProcess {
     setProcessChannelModeMerged(): void
 }
 interface LanPlayCore {
-    getLanPlay(): string
+    findLanPlay(): string
     createProcess(): QProcess
 }
 declare const _LanPlay: LanPlayCore
